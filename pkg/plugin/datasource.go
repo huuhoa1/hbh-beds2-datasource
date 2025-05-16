@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
-	"time"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -63,10 +62,18 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 type queryModel struct{}
 
+// TodosAPIResponse represents the structure of the JSONPlaceholder response.
+type TodosAPIResponse struct {
+	UserID    int     `json:"userId"`
+	ID        float32 `json:"id"`
+	Title     string  `json:"title"`
+	Completed bool    `json:"completed"`
+}
+
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
 
-	// Unmarshal the JSON into our queryModel.
+	// Unmarshal the JSON into our queryModel. what for?
 	var qm queryModel
 
 	log.Println("HBH: in query")
@@ -78,13 +85,60 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	}
 	log.Println("HBH: query model", qm)
 
+	// query the api
+	resp, err := http.Get("https://jsonplaceholder.typicode.com/todos")
+	if err != nil {
+		log.Printf("HBH: failed to fetch data: %v\n", err)
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	log.Println("HBH: b4 todos")
+	var todos []TodosAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&todos); err != nil {
+		log.Printf("HBH:failed to parse response: %v\n", err)
+		panic(err)
+	}
+	log.Printf("HBH: todos: %v\n", todos)
+
+	log.Println("HBH: b4 frame")
+
+	/* labels := data.Labels{
+		"source": "jsonplaceholder",
+		"type":   "todos",
+	}
+	frame := data.NewFrame("Todos",
+		data.NewField("ID", labels, []int{}),
+		data.NewField("Title", labels, []string{}),
+		data.NewField("Completed", labels, []bool{}),
+	) */
+	frame := data.NewFrame("Todos")
+	// add fields.
+	frame.Fields = append(frame.Fields,
+		data.NewField("ID", nil, []float32{}),
+		data.NewField("Title", nil, []string{}),
+		data.NewField("Completed", nil, []bool{}))
+	/* frame.Fields = append(frame.Fields,
+		data.NewField("ID", nil, []int{}),
+		data.NewField("Title", nil, []string{}),
+		data.NewField("Completed", nil, []bool{}),
+	) */
+
+	log.Println("HBH: after frame")
+
+	for _, todo := range todos {
+		log.Println("HBH: inside todos loop")
+		frame.AppendRow(todo.ID, todo.Title, todo.Completed)
+	}
+	log.Printf("HBH: DataFrame %v\n", frame)
+
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:
 	// https://grafana.com/developers/plugin-tools/introduction/data-frames
-	frame := data.NewFrame("response")
+	// frame := data.NewFrame("response")
 
 	// hbh
-	n := 100
+	/* n := 100
 	startTime := query.TimeRange.From
 	endTime := query.TimeRange.To
 	interval := endTime.Sub(startTime) / time.Duration(n-1)
@@ -99,17 +153,17 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	for i := 0; i < n; i++ {
 		x := float64(i) * step
 		cosValues[i] = math.Cos(x)
-	}
+	} */
 
 	// add fields.
 	/* frame.Fields = append(frame.Fields,
 		data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
 		data.NewField("values", nil, []int64{10, 20}),
 	) */
-	frame.Fields = append(frame.Fields,
+	/* frame.Fields = append(frame.Fields,
 		data.NewField("time", nil, times),
 		data.NewField("values", nil, cosValues),
-	)
+	) */
 
 	// add the frames to the response.
 	response.Frames = append(response.Frames, frame)
