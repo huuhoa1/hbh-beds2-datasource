@@ -78,6 +78,8 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 
 	log.Println("HBH: in query")
 	log.Println("HBH: query.JSON", query.JSON)
+	jsonString := string(query.JSON)
+	log.Println("HBH: query.JSON", jsonString)
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
@@ -127,7 +129,7 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	log.Println("HBH: after frame")
 
 	for _, todo := range todos {
-		log.Println("HBH: inside todos loop")
+		// log.Println("HBH: inside todos loop")
 		frame.AppendRow(todo.ID, todo.Title, todo.Completed)
 	}
 	log.Printf("HBH: DataFrame %v\n", frame)

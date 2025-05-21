@@ -3,3 +3,12 @@ services:
     extends:
       file: .config/docker-compose-base.yaml
       service: grafana
+      
+  splunk:
+    image: splunk/splunk:9.4
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=thisisasecret
+    ports:
+      - 8000:8000
+      - 8089:8089
