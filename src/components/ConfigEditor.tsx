@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, SecretInput } from '@grafana/ui';
+import { DataSourceHttpSettings, InlineField, Input, SecretInput } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions, MySecureJsonData } from '../types';
 
@@ -60,12 +60,17 @@ export function ConfigEditor(props: Props) {
           id="config-editor-api-key"
           isConfigured={secureJsonFields.apiKey}
           value={secureJsonData?.apiKey}
-          placeholder="Enter your API key"
+          placeholder="Enter your API key1"
           width={40}
           onReset={onResetAPIKey}
           onChange={onAPIKeyChange}
         />
       </InlineField>
+      <DataSourceHttpSettings
+      defaultUrl="https://localhost:8089/services/search/jobs"
+      dataSourceConfig={options}
+      onChange={onOptionsChange}
+      />
     </>
   );
 }

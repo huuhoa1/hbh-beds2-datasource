@@ -25,13 +25,23 @@ var (
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &Datasource{}, nil
+func NewDatasource(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	log.Println("HBH: in NewDatasource")
+	log.Println("HBH: settings", settings)
+	return &Datasource{
+		baseURL:  settings.URL,
+		user:     settings.BasicAuthUser,
+		password: settings.DecryptedSecureJSONData["basicAuthPassword"],
+	}, nil
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
-type Datasource struct{}
+type Datasource struct {
+	baseURL  string
+	user     string
+	password string
+}
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
@@ -47,7 +57,10 @@ func (d *Datasource) Dispose() {
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// create response struct
 	response := backend.NewQueryDataResponse()
-
+	log.Println("HBH: in QueryData")
+	log.Println("HBH: in QueryData: baseURL: ", d.baseURL)
+	log.Println("HBH: in QueryData: user: ", d.user)
+	log.Println("HBH: in QueryData: password: ", d.password)
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
 		res := d.query(ctx, req.PluginContext, q)
